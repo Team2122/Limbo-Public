@@ -1,0 +1,42 @@
+buildscript {
+    ext.kotlin_version = '1.1.51'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'java'
+apply plugin: 'application'
+
+def common = project(":common")
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+	compile common
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+//    compile 'org.controlsfx:controlsfx:8.40.12'
+}
+
+evaluationDependsOn(":common")
+
+mainClassName = 'org.teamtators.agitator.dashboard.Dashboard'
+
+def jarManifest = {
+	attributes 'Main-Class': mainClassName
+}
+
+jar {
+	from (configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }) {
+        exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+    }
+	manifest jarManifest
+}

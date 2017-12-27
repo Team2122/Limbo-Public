@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>Test</title>
+    <script src="jquery.js" type="application/javascript"></script>
+    <script src="jsoneditor.min.js" type="application/javascript"></script>
+    <link rel="stylesheet" href="jsoneditor.min.css" />
+</head>
+<body>
+<img src="stream.mjpg" id="stream">
+<button id="refreshStream">Refresh Stream</button>
+<br/>
+<label>Vision Config:</label>
+<div id="configEditor" style="width: 100%; height: 600px;"></div>
+<button id="updateButton">Update</button>
+<script type="application/javascript">
+    var configEditorElement = document.getElementById("configEditor");
+    var updateButton = document.getElementById("updateButton");
+    var editorOptions = {};
+    var configEditor = new JSONEditor(configEditorElement, editorOptions);
+
+    function readVisionConfig() {
+        return $.getJSON('/visionConfig');
+    }
+
+    function updateVisionConfig(data) {
+        return $.ajax('/visionConfig', {
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            method: 'PUT',
+            dataType: 'json'
+        });
+    }
+
+    readVisionConfig()
+            .done(function (config) {
+                console.log(config);
+                configEditor.set(config);
+            });
+
+    function updateConfig() {
+        var config = configEditor.get();
+        updateVisionConfig(config)
+    }
+
+    updateButton.onclick = updateConfig
+
+    $(document).keydown(function(e) {
+        if (e.ctrlKey && e.keyCode == 13) {
+            updateConfig()
+        }
+    });
+
+    var stream = document.getElementById("stream");
+    var origSrc = stream.src;
+    var refreshStreamButton = document.getElementById("refreshStream");
+    refreshStream.onclick = function() {
+        console.log("refreshing stream");
+        stream.src = origSrc + "?cachebreak=" + new Date();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+[Unit]
+Description=TatorVision service
+After=networking.target
+Requires=mosquitto.service
+
+[Service]
+WorkingDirectory=/home/tator/TatorVision/
+ExecStart=/usr/bin/java -Djava.library.path=/usr/local/lib -jar TatorVision.jar
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=network.target

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.cell.PropertyValueFactory?>
+<?import org.teamtators.agitator.dashboard.TimestampValueFactory?>
+<?import org.teamtators.agitator.dashboard.LoggerNameValueFactory?>
+
+<fx:root styleClass="log-pane" stylesheets="@/css/LogPane.css" type="ScrollPane" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+    <TableView fx:id="logItemsView" styleClass="log-items">
+        <columns>
+            <TableColumn prefWidth="60" text="Level">
+                <cellValueFactory>
+                    <PropertyValueFactory property="level" />
+                </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="100" text="Timestamp">
+                <cellValueFactory>
+                    <TimestampValueFactory />
+                </cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Thread" prefWidth="60">
+                <cellValueFactory>
+                    <PropertyValueFactory property="threadName" />
+                </cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Logger" prefWidth="180">
+                <cellValueFactory>
+                    <LoggerNameValueFactory/>
+                </cellValueFactory>
+            </TableColumn>
+            <TableColumn text="Message" prefWidth="Infinity">
+                <cellValueFactory>
+                    <PropertyValueFactory property="formattedMessage" />
+                </cellValueFactory>
+            </TableColumn>
+        </columns>
+        <placeholder>
+            <Label />
+        </placeholder>
+    </TableView>
+</fx:root>

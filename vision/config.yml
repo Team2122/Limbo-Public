@@ -1,0 +1,66 @@
+tables:
+  enabled: false
+#  host: "roboRIO-212-FRC.local"
+  host: "127.0.0.1"
+  tableName: "TatorVision"
+
+mqtt:
+  enabled: true
+  serverUri: tcp://TatorVision-9122.local:5800
+#  serverUri: tcp://localhost:1883
+  clientId: TatorVision
+
+server:
+  enabled: true
+  port:  5801
+  streamFps: 10
+
+vision:
+  modes:
+    FUEL:
+      cameraIndex: 0
+      maxFPS: 30
+
+      upsideDown: true
+#      fieldOfView: [62.2, 48.8] # RPI camera FOV
+#      verticalCameraAngle: 45.0 # degrees from horizontal
+#      goalHeight: 72 # (8 * 12) - 24.0
+#      horizontalAngleOffset: 0.0
+
+      lowerThreshold: [50.0, 200.0, 100.0]
+      upperThreshold: [100.0, 255.0, 255.0]
+      minArea: .0026
+      maxArea: .1
+      arcLengthPercentage: 0.01
+
+      startVisionScript: >
+        v4l2-ctl -d 0 -c exposure_auto=1 -c exposure_absolute=1 -c saturation=100 || :
+    GEAR:
+      cameraIndex: 1
+      maxFPS: 30
+
+      upsideDown: false
+
+      lowerThreshold: [50.0, 10.0, 220.0]
+      upperThreshold: [100.0, 255.0, 255.0]
+      minArea: .001
+      maxArea: .2
+      arcLengthPercentage: 0.01
+
+      startVisionScript: >
+        v4l2-ctl -d 1 -c exposure_auto=1 -c exposure_absolute=4 -c saturation=100 -c gain=0 || :
+
+  visionMode: GEAR
+
+  debug: false
+  display: CONTOURS
+
+#  inputRes: [1920, 1080]
+#  streamRes: [1920, 1080]
+  inputRes: [320, 240]
+  streamRes: [320, 240]
+
+profile: false
+
+display:  false  #display an image on screen
+

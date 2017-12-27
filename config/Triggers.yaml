@@ -1,0 +1,27 @@
+Driver:
+  A: toggle whenPressed $GearAutoUnload
+  B: toggle whenPressed Vision.ToggleMode
+  Y: toggle whenPressed RotateToBoiler
+#  X: toggle whenPressed Drive.FieldCentric
+  TRIGGER_RIGHT: whilePressed Climber.Climb
+  BUMPER_RIGHT: start whenPressed Gear.TogglePick
+  BUMPER_LEFT:
+    - start whenPressed Gear.Release
+    - start whenReleased Gear.Home
+  POV_DOWN: start whenPressed Shooter.Idle
+  POV_LEFT: start whenPressed Shooter.SpinUp
+  POV_UP: start whenPressed Shooter.Shoot
+  POV_RIGHT:
+    - start whenPressed Shooter.Load
+    - start whenReleased Shooter.Idle
+  #START: whilePressed Climber.Force
+  BACK: start whenPressed Gear.Idle
+  TRIGGER_LEFT:
+    - start whenPressed Drive.ShiftHigh
+    - start whenReleased Drive.ShiftLow
+  TRIGGER_RIGHT: whilePressed Climber.Climb
+  STICK_RIGHT: start whenPressed Drive.ResetYaw
+Gunner:
+  TRIGGER_RIGHT: whilePressed Climber.Climb
+  A: start whenPressed Vision.ToggleMode
+defaults: [ Drive.Tank, Gear.Continuous ]

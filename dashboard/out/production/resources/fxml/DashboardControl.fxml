@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.web.WebView?>
+<!--<?import org.controlsfx.glyphfont.Glyph?>-->
+<?import org.teamtators.agitator.dashboard.*?>
+<fx:root type="BorderPane" xmlns="http://javafx.com/javafx/" xmlns:fx="http://javafx.com/fxml/1">
+    <top>
+        <ToolBar>
+            <Button fx:id="connectButton" onAction="#toggleConnect"/>
+            <Button onAction="#clearLogs">
+                Clear
+                <!--<graphic>-->
+                    <!--<Glyph fontFamily="FontAwesome" icon="TRASH"/>-->
+                <!--</graphic>-->
+            </Button>
+        </ToolBar>
+    </top>
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+            <Tab text="Dashboard">
+                <VBox>
+                    <TitledPane prefHeight="20.0" text="Choosers">
+                        <FlowPane fx:id="chooserArea" minHeight="50.0">
+                            <DashboardChoice/>
+                        </FlowPane>
+                    </TitledPane>
+                    <LogPane fx:id="logPane" fitToWidth="true">
+                        <VBox.vgrow>ALWAYS</VBox.vgrow>
+                    </LogPane>
+                </VBox>
+            </Tab>
+            <Tab text="Vision">
+                <WebView fx:id="visionStream"/>
+            </Tab>
+        </TabPane>
+    </center>
+    <bottom>
+        <HBox>
+            <ConnectionLabel fx:id="connectionLabelBroker" prefWidth="200" title="Broker"/>
+            <ConnectionLabel fx:id="connectionLabelVision" prefWidth="200" title="Vision"/>
+            <ConnectionLabel fx:id="connectionLabelRobot" prefWidth="200" title="Robot"/>
+        </HBox>
+    </bottom>
+</fx:root>

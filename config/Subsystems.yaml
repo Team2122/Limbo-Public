@@ -1,0 +1,131 @@
+climber:
+  climberMotor: { channel: 2, inverted: false, powerChannels: [ 0, 15 ] }
+
+gear:
+  pickRollerMotor: { channel: 5, inverted: true, powerChannel: 9 }
+  pivotMotor: { channel: 4, inverted: false, powerChannel: 11 }
+  pivotEncoder: { channel: 0, fullRange: 360, offset: -179.2 }
+  dropJaw: { channel: 2 }
+  gearSensor: { channel: 4, type: PNP }
+  pegSensorA: { channel: 5, type: PNP }
+  pegSensorB: { channel: 11, type: PNP }
+  gearPivotController:
+    maxAbsoluteOutput: 0.6
+    P: 0.06
+    I: 0.0
+    target: { within: 5.0 }
+  homeAngle: 10.0
+  releasedAngle: 10.0
+  pickAngle: 88.5
+  pickPower: 1
+  homeHoldPower: -0.05
+  pickHoldPower: 0.02
+
+drive:
+  leftMotor: { channel: 1, inverted: true, powerChannels: [1, 2, 3] }
+  rightMotor: { channel: 0, inverted: false, powerChannels: [12, 13, 14] }
+  leftEncoder: { aChannel: 2, bChannel: 3, reverse: true, distancePerPulse: 0.036982 }
+  rightEncoder: { aChannel: 0, bChannel: 1, distancePerPulse: 0.036982 }
+  leftTransEncoder: { aChannel: 6, bChannel: 7, distancePerPulse: 0.00277778 }
+  rightTransEncoder: { aChannel: 8, bChannel: 9, reverse: true, distancePerPulse: 0.00277778 }
+  shifterSolenoidA: { channel: 1 }
+  shifterSolenoidB: { channel: 0 }
+  controllerLow:
+    P: 0.02
+#    I: 0.0006
+    D: 0.0
+    F: 0.0077
+#    minOutput: .0461
+    minISetpoint: 1.0
+    maxIError: 12.0
+    logData: true
+  controllerHigh:
+    P: 0.01
+#    I: 0.0006
+    D: 0.0
+    F: 0.0045
+    minISetpoint: 1.0
+    maxIError: 12.0
+#    logData: true
+  rotationController:
+    P: 1.0
+    I: 0.1
+    D: 0.0
+    F: 0.0
+    maxIError: 12.0
+#    target: { within: .5 }
+  straightMotionFollower:
+    kpP: 1.0
+    kiP: 0.0
+    kpV: 0.025
+    kfV: .0077
+    kMinOutput: .0461
+    kfA: 0.0016
+    maxIError: 10.0
+#    logData: true
+  yawAngleController:
+    P: 0.01
+    I: 0.0
+    D: 0.0
+    F: 0.0
+    maxIError: 12.0
+#    logData: true
+  rotationMotionFollower:
+    kpP: 0.1
+    kiP: 0.5
+    kpV: 0.005
+    kfV: .0025
+    kMinOutput: .1087
+    kfA: 0.0004
+    maxIError: 2.0
+#    logData: true
+  transController:
+    P: 0.087
+    F: 0.043
+
+
+shooter:
+  shooterWheel:
+    canId: 1
+    feedbackDevice: QuadEncoder
+    encoderCpr: 360
+    brake: false
+    reverseOutput: false
+    reverseSensor: false
+    peakForwardVoltage: 12.0
+    peakReverseVoltage: 0.0 # so it never drives backwards
+    controlMode: Speed
+    velocityMeasurementPeriod: Period_5Ms
+    velocityMeasurementWindow: 32
+    p: 3.0 # 1.0
+#    i: 0.0006
+    d: 4.0 # 0.8
+    f: 0.023
+    izone: 1024 # probably in RPM
+  maxTestSpeed: 4000.0
+  feederMotor: { channel: 3, inverted: false }
+  defaultRPM: 3075.0
+  state: IDLE
+  feederPower: 1.0
+#  speedMap:
+#    68.5: 3000
+#    84.5: 3150
+#    102: 3300
+#    125.5: 3525
+  speedMap: { m: 9.1621, b: 2372.2 }
+
+operatorInterface:
+  driverJoystick: {index: 0, leftTriggerDeadzone: 0.1, rightTriggerDeadzone: 0.1}
+  gunnerJoystick: {index: 1, leftTriggerDeadzone: 0.1, rightTriggerDeadzone: 0.1}
+  rumbleTime: 0.5
+  rumblePower: 1.0
+
+vision:
+  lightRelay: { channel: 0 }
+  distancePolyFuel: { a: 33.012, b: 77.38, c: 80.659 }
+  distanceGear: { a: 89.396, b: -179.87, c: 95.022 }
+  fovX: 50
+  yawOffsetFuel: -4
+
+mqttUpdater:
+  serverURI: tcp://TatorVision-9122.local:5800

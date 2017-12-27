@@ -1,0 +1,33 @@
+.connection-label {
+    -fx-padding: 6px;
+    -fx-background-insets: 4px;
+    -fx-border-insets: 4px;
+    -fx-border-width: 1px;
+    /*-fx-border-color: #262626;*/
+    -fx-border-color: -fx-box-border;
+}
+
+.connection-label-box {
+    -fx-width: 10px;
+    -fx-height: 10px;
+    -fx-border-width: 2px;
+    -fx-border-color: #000;
+    -fx-border-radius: 2px;
+    -fx-background-radius: 2px;
+}
+
+.connection-label-box.unknown {
+    -fx-background-color: #ffff00;
+}
+
+.connection-label-box.connected {
+    -fx-background-color: #37ff2b;
+}
+
+.connection-label-box.disconnected {
+    -fx-background-color: #ff2f5d;
+}
+
+.connection-label-box.connecting {
+    -fx-background-color: #ff00fc;
+}

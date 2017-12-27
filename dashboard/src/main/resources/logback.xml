@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration status="WARN">
+    <property name="logLevel" value="${LOG_LEVEL:-debug}" />
+
+    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %highlight(%-5level) %cyan(%logger{36}) - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--<appender name="Myself" class="ch.qos.logback.classic.net.server.ServerSocketAppender">-->
+        <!--<port>5802</port>-->
+    <!--</appender>-->
+
+    <root level="${logLevel}">
+        <appender-ref ref="Console"/>
+        <!--<appender-ref ref="Screen"/>-->
+    </root>
+
+    <!--<receiver class="ch.qos.logback.classic.net.SocketReceiver">-->
+        <!--<remoteHost>roboRIO-2122-FRC.local</remoteHost>-->
+        <!--<port>5802</port>-->
+        <!--<reconnectionDelay>1000</reconnectionDelay>-->
+    <!--</receiver>-->
+
+    <receiver class="ch.qos.logback.classic.net.server.ServerSocketReceiver">
+        <port>5802</port>
+    </receiver>
+</configuration>

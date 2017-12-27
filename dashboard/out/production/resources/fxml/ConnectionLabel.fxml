@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<fx:root alignment="CENTER_LEFT" styleClass="connection-label" stylesheets="@/css/ConnectionLabel.css" type="HBox"
+         xmlns="http://javafx.com/javafx/8.0.72" xmlns:fx="http://javafx.com/fxml/1">
+    <Pane fx:id="colorBox" minHeight="20.0" minWidth="20.0" styleClass="connection-label-box, unknown">
+        <opaqueInsets>
+            <Insets/>
+        </opaqueInsets>
+        <HBox.margin>
+            <Insets right="8.0"/>
+        </HBox.margin>
+    </Pane>
+    <Label fx:id="label" text="Untitled"/>
+</fx:root>

@@ -1,0 +1,341 @@
+import org.hidetake.groovy.ssh.Ssh
+import org.hidetake.groovy.ssh.core.Remote
+
+buildscript {
+    ext.kotlin_version = "1.1.51"
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath(group: 'org.hidetake', name: 'groovy-ssh', version: '2.9.0') {
+            exclude group: 'org.codehaus.groovy', module: 'groovy-all'
+        }
+    }
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'java'
+apply plugin: 'application'
+
+def common = project(":common")
+
+evaluationDependsOn(':common')
+
+enum DeployConfig {
+    NORMAL
+}
+
+ext.sshService = Ssh.newService()
+def deployTimeout = findProperty("vision.deploy.timeout") as Integer ?: 3
+def deployAddress = findProperty("vision.deploy.address") ?: ""
+def deployConfigStr = (project.findProperty("vision.deploy.config") as String)?.toUpperCase()
+DeployConfig deployConfig = (deployConfigStr as DeployConfig) ?: DeployConfig.NORMAL
+
+class DeployExtensions {
+    String deployAddress
+    Integer deployTimeout
+    Remote remote = new Remote(
+            name: "TatorVision",
+            timeoutSec: deployTimeout,
+            user: "tator",
+            password: "Team2122",
+            host: deployAddress
+    )
+    String remoteLibsDir = "/usr/local/lib"
+    String deployDir = "/home/tator/TatorVision"
+    String libDir = "$deployDir/libs"
+    String runArgs = ""
+    String jvmArgs = ""
+    int debugPort = 8348
+    DeployConfig deployConfig
+}
+
+project.ext.deploy = new DeployExtensions(deployAddress: deployAddress, deployConfig: deployConfig,
+        deployTimeout: deployTimeout)
+
+def getCurrentPlatform() {
+    def os = System.getProperty("os.name")
+    def arch = System.getProperty("os.arch")
+    if (os.matches("Windows.*")) {
+        if (arch == "amd64") {
+            return "windows-x86_64"
+        } else {
+            return "windows-x86"
+        }
+    } else if (os.matches(".*Linux.*")) {
+        if (arch == "amd64") {
+            return "linux-x86_64"
+        } else {
+            return "linux-x86"
+        }
+    } else if (os.matches(".*Mac.*")) {
+        return "osx-x86_64"
+    } else {
+        throw new GradleException("Unsupported platform for vision: $os $arch")
+    }
+}
+
+repositories {
+    mavenCentral()
+    flatDir {
+        dirs "lib"
+    }
+}
+
+dependencies {
+    common.configurations.compile.allDependencies.collect { compile it }
+    compile common // only for intellij, should not add to jar
+
+    compile name: "opencv-320"
+
+    compile group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.25'
+    compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-kotlin', version: '2.9.2'
+    compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: '2.9.2'
+    compile group: 'org.glassfish.grizzly', name: 'grizzly-http-server', version: '2.4.2'
+    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
+}
+
+mainClassName = 'org.teamtators.vision.MainKt'
+
+def jarManifest = {
+    attributes (
+            'Main-Class': mainClassName,
+            'Class-Path': configurations.compile.collect { "${deploy.libDir}/${it.getName()}" }.join(' ')
+    )
+}
+
+jar {
+    from configurations.compile.findAll { it.isDirectory() }
+    manifest jarManifest
+}
+
+def localNativeLibPath = new File(buildDir, "localNativeLib");
+
+task extractLocalNativeLibs(type: Copy) {
+    from {
+        fileTree("native/$currentPlatform")
+    }
+    into localNativeLibPath
+}
+
+run {
+    systemProperties = [
+            "java.library.path": localNativeLibPath.absolutePath
+    ]
+}
+run.dependsOn extractLocalNativeLibs
+
+def raspiHost = "TatorVision-9122.local"
+def raspiIp = "10.91.22.11"
+
+Remote cloneRemote(Remote remote = project.deploy.remote) {
+    def props = Remote.metaClass.getProperties()
+            .findAll { it.getSetter() != null }
+            .collectEntries {
+        [it.getName(), it.getProperty(remote)]
+    }
+    new Remote(props)
+}
+
+boolean runSshTest(String addr) {
+    assert addr
+    def remote = cloneRemote()
+    remote.host = addr
+    try {
+        sshService.run {
+            session(remote) {
+            }
+        }
+        return true
+    } catch (ignored) {
+        print(ignored.toString())
+        return false
+    }
+}
+
+task findRaspi() {
+    group "deploy"
+    description "Determine the active address for the raspi"
+    shouldRunAfter jar
+    doLast {
+        DeployExtensions dep = project.deploy
+        println "==> Looking for raspi on network"
+        def candidates = [
+                ["mDNS", raspiHost],
+                ["Static IP", raspiIp]
+        ]
+        if (dep.deployAddress != "") {
+            candidates.add(0, ["Manually specified", deployAddress])
+        }
+        boolean found = candidates.any { pair ->
+            String name = pair[0]
+            String addr = pair[1]
+            print "-> ${name} (${addr})... "
+            System.out.flush()
+            if (runSshTest(addr)) {
+                println "SUCCESS"
+                dep.remote.host = addr
+                println "==> Found Raspi at ${addr}"
+                return true
+            } else {
+                println()
+                return false
+            }
+        }
+        if (!found) {
+            throw new GradleException("Could not find raspi on network")
+        }
+    }
+}
+
+task deployNativeLibs() {
+    group "deploy"
+    description "Deploys all native libraries to the raspi"
+    dependsOn findRaspi
+    doLast {
+        DeployExtensions dep = project.deploy
+        Remote rootRemote = cloneRemote()
+        rootRemote.user = "root"
+
+        sshService.run {
+            session(rootRemote) {
+                println "==> Deploying native libraries to raspi"
+
+                def libFiles = fileTree("native/arm-raspi/")
+                libFiles.files.each {
+                    println "== ${it.name} -> ${dep.remoteLibsDir}"
+                }
+                put from: libFiles, into: dep.remoteLibsDir
+                execute "ldconfig"
+            }
+        }
+    }
+}
+
+task deployService() {
+    group "deploy"
+    description "Deploys the systemd service to the raspi"
+    dependsOn findRaspi
+    doLast {
+        DeployExtensions dep = project.deploy
+        Remote rootRemote = cloneRemote()
+        rootRemote.user = "root"
+
+        sshService.run {
+            session(rootRemote) {
+                println "==> Deploying systemd service"
+                put from: file("TatorVision.service"), into: "/etc/systemd/system/"
+                execute "systemctl daemon-reload"
+            }
+        }
+    }
+}
+
+def doDeploy(Map opts) {
+    DeployExtensions dep = project.deploy
+
+    def jarFile = project.jar.archivePath
+    def remoteJarPath = "${dep.deployDir}/TatorVision.jar"
+
+    sshService.run {
+        session(dep.remote) {
+            if (opts.stop || opts.jar || opts.restart) {
+                println "==> Stopping TatorVision"
+                executeSudo "systemctl stop TatorVision"
+            }
+            if (opts.libs) {
+                println "==> Deploying dependency JARs to raspi (and removing old ones)"
+                execute "rm -rf ${dep.libDir} || :"
+                execute "mkdir -p ${dep.libDir}"
+                project.configurations.compile
+                    .findAll { it.isFile() }
+                    .collect {
+                    println "> ${it.name} -> ${dep.libDir}"
+                    put from: it, into: dep.libDir
+                }
+            }
+            if (opts.jar) {
+                println "==> Deploying JAR to raspi in configuration ${dep.deployConfig}"
+                execute "mkdir -p ${dep.deployDir}"
+                put from: jarFile, into: remoteJarPath
+                execute "chmod +x ${remoteJarPath}"
+
+                execute "sync"
+            }
+            if (opts.config) {
+                println "==> Deploying configs to robot"
+                execute "mkdir -p ${dep.deployDir}"
+                put from: project.file("config.yml"), into: dep.deployDir
+            }
+            if (opts.restart) {
+                println "==> Restarting TatorVision"
+                executeSudo "systemctl restart TatorVision"
+            }
+            if (opts.reboot) {
+                println "==> Rebooting raspi"
+                execute "reboot"
+            }
+            if (opts.tail) {
+                println "==> Watching logs"
+                execute "sudo journalctl -u TatorVision.service -f", logging: "stdout"
+            }
+        }
+    }
+}
+
+task("restartCode") {
+    group "deploy"
+    description "Restarts the vision code on the remote processor"
+    dependsOn findRaspi
+    doLast {
+        doDeploy restart: true
+    }
+}
+
+task("rebootRemote") {
+    group "deploy"
+    description "Reboots the remote processor"
+    dependsOn findRaspi
+    doLast {
+        doDeploy reboot: true
+    }
+}
+
+task("deployLibs") {
+    group "deploy"
+    description "Deploys library JARs to the remote processor"
+    dependsOn findRaspi
+    doLast {
+        doDeploy libs: true
+    }
+}
+
+task("deployConfig") {
+    group "deploy"
+    description "Deploys the config to the remote processor and restarts the code"
+    dependsOn findRaspi
+    doLast {
+        doDeploy config: true, restart: true
+    }
+}
+
+task("deployJar") {
+    group "deploy"
+    description "Deploys the compiled JAR file and config to the remote processor and restarts the code"
+    dependsOn jar, findRaspi
+    doLast {
+        doDeploy jar: true, config: true, restart: true
+    }
+}
+
+task("executeRemote") {
+    group "deploy"
+    description "Restarts the raspi and watches the logs"
+    dependsOn findRaspi
+    doLast {
+        doDeploy restart: true, tail: true
+    }
+}

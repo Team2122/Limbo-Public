@@ -1,0 +1,27 @@
+.log-items, .log-items .table-cell {
+    -fx-background-color: #262626;
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+    -fx-font-family: "Fira Mono", "Courier New", monospace;
+    -fx-font-size: 12.0;
+}
+
+.table-row-cell:levelWarn * {
+    -fx-fill: #fc0;
+}
+
+.table-row-cell:levelInfo * {
+    -fx-fill: #24d;
+}
+
+.table-row-cell:levelDebug * {
+    -fx-fill: #2ef;
+}
+
+.table-row-cell:levelTrace * {
+    -fx-fill: #ddd;
+}
+
+.table-row-cell:levelError * {
+    -fx-fill: #f40;
+}

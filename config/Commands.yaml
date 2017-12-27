@@ -1,0 +1,197 @@
+Climber.Climb:
+  maxPower: 1.0
+  maxCurrent: 400.0
+  ramper: { maxAcceleration: 0.5 }
+
+Climber.Force: { power: 0.5 }
+
+Drive.Tank:
+  low: { exponent: 1.5, deadzone: .1 }
+  high: { exponent: 2.0, deadzone: .1 }
+  ramper: { maxAcceleration: 3 }
+
+Drive.FieldCentric:
+  low:
+    throttle: { exponent: 1.5, deadzone: .1 }
+    turn: { exponent: 2.0, deadzone: .1, scale: 0.5 }
+    angleMagnitude: { exponent: 2.0, deadzone: .1, scale: 0.7 }
+    kAngleP: .02
+  high:
+    throttle: { exponent: 1.5, deadzone: .1 }
+    turn: { exponent: 1.0, deadzone: .1, scale: 1.0 }
+    angleMagnitude: { exponent: 1.0, deadzone: .1, scale: 1.0 }
+    kAngleP: .02
+  ramper: { maxAcceleration: 3 }
+
+GearAutoUnload:
+  velocity: 48.0
+  closeDistance: 10.0
+  closeVelocity: 18.0
+  gearDistance: -11
+  minGearVision: 10.0
+
+^Drive.Straight: { speed: 84.0, endSpeed: 0.0, maxAcceleration: 140 }
+^Drive.Rotate: { rotationSpeed: 180, maxAcceleration: 400 }
+^Drive.Arc: { speed: 40.0, endSpeed: 0.0, maxAcceleration: 100, maxAngularAcceleration: 400 }
+^GearAutoUnload: { velocity: 12.0 }
+^DriveToGear: { velocity: 12.0 }
+
+^RotateToBoiler:
+  rotationSpeed: 180
+  maxAcceleration: 300
+  visionDelay: 0.2
+  maxOffset: 1.0
+  angleTolerance: 0.5
+
+RotateToBoiler: { class: RotateToBoiler, setShooterDistance: true }
+RotateToBoilerNoDistance: { class: RotateToBoiler, setShooterDistance: false }
+
+Drive.ShiftHigh: { class: Drive.Shift, gear: HIGH }
+Drive.ShiftLow: { class: Drive.Shift, gear: LOW }
+
+#
+# AUTO
+#
+
+$Test:
+#  - class: Drive.Rotate
+#    angle: 180.0
+#  - class: Drive.Straight
+#    distance: 100.0
+#    speed: 84.0
+  - { class: Drive.Straight, angle: 0.0, distance: 48.0, endSpeed: 40.0 }
+  - { class: Drive.Arc, angle: 90.0, radius: 24.0, speed: 40.0, endSpeed: 40.0 }
+  - { class: Drive.Straight, angle: 90.0, distance: 48.0, speed: 60.0, endSpeed: 0.0 }
+#  - { class: Wait, period: 1.0 }
+#  - { class: Drive.Arc, angle: 0.0, radius: 24.0 }
+
+$GearAutoUnload:
+  - Gear.Home
+  - GearAutoUnload
+  - class: Drive.Straight
+    distance: -10
+  - Gear.Home
+
+$AutoGearCenter:
+  - { class: Drive.Straight, angle: 0.0, distance: 48.0 }
+  - $GearAutoUnload
+
+$AutoGearCenterDead:
+  - { class: Drive.Straight, angle: 0.0, distance: 60.0, endSpeed: 18 }
+  - { class: Drive.Straight, angle: 0.0, distance: 15.0, speed: 18 }
+  - Gear.Release
+  - { class: Drive.Straight, angle: 0.0, distance: -10.0, endSpeed: 84.0 }
+  - Gear.Home
+
+AutoGearBoiler: { class: SelectColor, red: $AutoGearRight, blue: $AutoGearLeft }
+AutoGearFar:    { class: SelectColor, red: $AutoGearLeft,  blue: $AutoGearRight }
+
+$AutoGearRight:
+  - { class: Drive.Straight, angle: 0.0, distance: 90.0 }
+  - { class: Drive.Rotate, angle: -60.0 }
+  - $GearAutoUnload
+
+$AutoGearLeft:
+  - { class: Drive.Straight, angle: 0.0, distance: 90.0 }
+  - { class: Drive.Rotate, angle: 60.0 }
+  - $GearAutoUnload
+
+AutoGearBoilerAndShoot: { class: SelectColor, red: $AutoGearBoilerAndShootRed, blue: $AutoGearBoilerAndShootBlue }
+
+$AutoGearBoilerAndShootRed:
+  - $AutoGearRight
+  - Shooter.SpinUp
+  - { class: Drive.Straight, angle: -60.0, distance: -10 }
+  - { class: Drive.Rotate, angle: -225 }
+  - { class: Drive.Straight, distance: 48 }
+  - RotateToBoiler
+  - Shooter.Shoot
+
+$AutoGearBoilerAndShootBlue:
+  - $AutoGearLeft
+  - Shooter.SpinUp
+  - { class: Drive.Straight, angle: 60.0, distance: -10 }
+  - { class: Drive.Rotate, angle: 225 }
+  - { class: Drive.Straight, distance: 48 }
+  - RotateToBoiler
+  - Shooter.Shoot
+
+AutoTwoGear: { class: SelectColor, red: $AutoTwoGearRed, blue: $AutoTwoGearBlue }
+
+$AutoTwoGearRed:
+  - $AutoGearCenterDead
+  - { class: Drive.Arc, radius: -30.0, angle: 100.0, speed: 84.0 }
+#  - { class: Drive.Arc, radius: -36.0, angle: 100.0, speed: 84.0 }
+  - Gear.Pick
+  - { class: Drive.Straight, angle: 90, distance: 96.0, endSpeed: 30.0 }
+#  - { class: Drive.Straight, angle: 90, distance: 20.0, speed: 40.0, endSpeed: 40.0 }
+  - { class: Drive.Arc, angle: 0, radius: 33.0, speed: 30.0, endSpeed: 30.0 }
+#  - { class: Drive.Rotate, angle: 0.0 }
+#  - { class: Drive.Straight, angle: 0.0, distance: 48.0 }
+#  - { class: Drive.Straight, angle: 0.0, distance: 24.0, endSpeed: 60.0 }
+#  - { class: Drive.Rotate, angle: -60.0 }
+  - { class: Drive.Arc, angle: -55.0, radius: 33.0, speed: 30.0, endSpeed: 0.0 }
+  - $GearAutoUnload
+  - { class: Shooter.SetDesiredSpeed, speed: 3450.0 }
+  - Shooter.SpinUp
+  - { class: Drive.Straight, angle: -60.0, distance: -10 }
+  - { class: Drive.Rotate, angle: -225 }
+#  - { class: Drive.Straight, distance: 48 }
+  - RotateToBoiler
+  - Shooter.Shoot
+
+$AutoTwoGearBlue:
+  - $AutoGearCenterDead
+  - { class: Drive.Arc, radius: -34.0, angle: -100.0, speed: 84.0 }
+#  - { class: Drive.Arc, radius: -36.0, angle: -100.0, speed: 84.0 }
+  - Gear.Pick
+  - { class: Drive.Straight, angle: -90, distance: 96.0, endSpeed: 30.0 }
+#  - { class: Drive.Straight, angle: -90, distance: 20.0, speed: 40.0, endSpeed: 40.0 }
+  - { class: Drive.Arc, angle: 0, radius: 33.0, speed: 30.0, endSpeed: 30.0 }
+#  - { class: Drive.Rotate, angle: 0.0 }
+#  - { class: Drive.Straight, angle: 0.0, distance: 48.0 }
+#  - { class: Drive.Straight, angle: 0.0, distance: 24.0, endSpeed: 60.0 }
+#  - { class: Drive.Rotate, angle: 60.0 }
+  - { class: Drive.Arc, angle: 55.0, radius: 33.0, speed: 30.0, endSpeed: 0.0 }
+  - $GearAutoUnload
+  - { class: Shooter.SetDesiredSpeed, speed: 3450.0 }
+  - Shooter.SpinUp
+  - { class: Drive.Straight, angle: 60.0, distance: -10 }
+  - { class: Drive.Rotate, angle: 225 }
+#  - { class: Drive.Straight, distance: 48 }
+  - RotateToBoiler
+  - Shooter.Shoot
+
+AutoGearCenterAndShoot: { class: SelectColor, red: $AutoGearCenterAndShootRed, blue: $AutoGearCenterAndShootBlue }
+
+$AutoGearCenterAndShootRed:
+  - $AutoGearCenter
+  - Shooter.SpinUp
+  - { class: Drive.Straight,            distance: -36.0 }
+  - { class: Drive.Rotate,   angle: 90,                 }
+  - { class: Drive.Straight, angle: 90, distance: 72.0  }
+  - { class: Drive.Rotate,   angle: 120                 }
+  - RotateToBoiler
+  - Shooter.Shoot
+
+$AutoGearCenterAndShootBlue:
+  - $AutoGearCenter
+  - Shooter.SpinUp
+  - { class: Drive.Straight,             distance: -36.0 }
+  - { class: Drive.Rotate,   angle: -90,                 }
+  - { class: Drive.Straight, angle: -90, distance: 72.0  }
+  - { class: Drive.Rotate,   angle: -120                 }
+  - RotateToBoiler
+  - Shooter.Shoot
+
+$AutoChooser:
+  - class: Chooser
+    options:
+      - NoAuto
+      - $AutoGearCenter
+      - AutoGearBoiler
+      - AutoGearBoilerAndShoot
+      - AutoGearFar
+      - AutoTwoGear
+      - AutoGearCenterAndShoot
+      - $Test
